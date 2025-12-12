@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kyle's Daily Gift Countdown</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Courier Prime', monospace;
+            background-color: #64689a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        #snowCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .card {
+            background: #64689a;
+            border: 0px;
+            border-radius: 30px;
+            padding: 60px 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .card img {
+            width: 300px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 40px;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+        .date {
+            font-size: 20px;
+            color: #ffffff;
+            margin-bottom: 50px;
+        }
+        .tree-container {
+            margin: 50px 0;
+        }
+        .tree-image {
+            width: 150px;
+            height: auto;
+            image-rendering: pixelated;
+        }
+        .message {
+            font-size: 20px;
+            color: #ffffff;
+            margin-top: 30px;
+            line-height: 1.6;
+        }
+        .gift-container {
+            margin: 40px 0;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .gift-container.revealed {
+            cursor: default;
+        }
+        .gift-container.revealed:hover {
+            transform: none;
+        }
+        .gift-image {
+            width: 120px;
+            height: auto;
+            image-rendering: pixelated;
+            transition: transform 0.18s ease;
+        }
+        .gift-image:hover {
+            transform: scale(1.08);
+        }
+        .gift-label {
+            font-size: 20px;
+            margin-top: 15px;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        .gift-subtitle {
+            font-size: 20px;
+            color: #ffffff;
+            margin-top: 5px;
+        }
+        .countdown-timer {
+            font-size: 14px;
+            color: #ffffff;
+            margin-top: 10px;
+        }
+        .revealed-gift {
+            margin: 40px 0;
+        }
+        .revealed-gift-image {
+            width: 180px;
+            height: auto;
+            image-rendering: pixelated;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="snowCanvas"></canvas>
+    <div class="card" id="mainCard">
+        <h1>Kyle's Christmas Countdown</h1>
+        <div class="date" id="currentDate"></div>
+        <div id="content"></div>
+    </div>
+    <script>
+        localStorage.clear();
+
+        const presentTimes = [
+            "2025-12-11T14:00:00",
+            "2025-12-11T16:00:00",
+            "2025-12-12T10:00:00",
+            "2025-12-12T18:00:00"
+        ].map(t => new Date(t));
+
+        const gifts = [
+            { image: "./images/images/day1.png" },
+            { image: "./images/images/day2.png" },
+            { image: "./images/images/day3.png" },
+            { image: "./images/images/day4.png" },
+            { image: "./images/images/day5.png" }
+        ];
+
+        function preloadImages(list) {
+            list.forEach(src => { const img = new Image(); img.src = src; });
+        }
+        const assetList = gifts.map(g => g.image).concat(["./images/images/giftbox.png", "./images/images/christmastree.png"]);
+        preloadImages(assetList);
+        const giftDates = [
+            new Date('2025/12/19'),
+            new Date('2025/12/20'),
+            new Date('2025/12/21'),
+            new Date('2025/12/22'),
+            new Date('2025/12/23')
+        ];
+        function formatDate(date) {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                            'July', 'August', 'September', 'October', 'November', 'December'];
+            return `Today is: ${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+        }
+        function getCurrentGiftDay() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            for (let i = 0; i < giftDates.length; i++) {
+                const giftDate = new Date(giftDates[i]);
+                giftDate.setHours(0, 0, 0, 0);
+                if (today.getTime() === giftDate.getTime()) return i;
+            }
+            return -1;
+        }
+        function getOpenedGifts() {
+            const opened = {};
+            for (let i = 0; i < 5; i++) {
+                const saved = localStorage.getItem(`gift_${i}_opened`);
+                if (saved) opened[i] = JSON.parse(saved);
+            }
+            return opened;
+        }
+        function formatTimeUntil(targetDate) {
+            const now = new Date();
+            const diff = targetDate - now;
+            if (diff <= 0) return "Available now!";
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            return `${hours}h ${minutes}m ${seconds}s`;
+        }
+        function openGift(giftIndex) {
+            const gift = gifts[giftIndex];
+            const giftBox = document.getElementById('giftBox');
+
+            if (!giftBox) return;
+            // mark opened immediately to reflect state
+            try { localStorage.setItem(`gift_${giftIndex}_opened`, JSON.stringify(true)); } catch (e) {}
+
+            giftBox.classList.add('revealed');
+            giftBox.innerHTML = `
+                <img src="${gift.image}" alt="${gift.name}" class="revealed-gift-image" style="opacity:0; transition: opacity 0.4s ease;">
+                <div class="gift-label">Gift ${giftIndex + 1}</div>
+                <div class="message" id="nextGiftTimer">Next gift in: calculating...</div>
+            `;
+
+            const img = giftBox.querySelector('img');
+            requestAnimationFrame(() => {
+                img.style.opacity = '1';
+            });
+
+            const nextGiftDay = giftIndex + 1;
+            if (nextGiftDay < gifts.length) {
+                const updateTimer = () => {
+                    const nextGiftDate = giftDates[nextGiftDay];
+                    const timerEl = document.getElementById('nextGiftTimer');
+                    if (timerEl) timerEl.textContent = `Next gift in: ${formatTimeUntil(nextGiftDate)}`;
+                };
+                updateTimer();
+                setInterval(updateTimer, 1000);
+            }
+        }
+
+        function render() {
+            const currentDate = new Date();
+            document.getElementById('currentDate').textContent = formatDate(currentDate);
+            const currentGiftDay = getCurrentGiftDay();
+            const openedGifts = getOpenedGifts();
+            const content = document.getElementById('content');
+            const card = document.getElementById('mainCard');
+            if (currentGiftDay === -1 && currentDate < giftDates[0]) {
+                card.className = 'card';
+                content.innerHTML = `
+                    <div class="tree-container">
+                        <img src="images/images/christmastree.png" alt="Christmas tree">
+                    </div> 
+                    <div class="message">
+                        No gifts from Shrika yet
+                        <br>
+                        Check back later
+                    </div>
+                `;
+                return;
+            }
+            if (currentDate > giftDates[4]) {
+                card.className = 'card gray-border';
+                content.innerHTML = `
+                    <div class="message">
+                        You opened all the gifts bruh<br>
+                        Merry Christmas!
+                    </div>
+                `;
+                return;
+            }
+            if (currentGiftDay >= 0 && currentGiftDay < 5) {
+                const isOpened = openedGifts[currentGiftDay];
+                if (isOpened) {
+                    card.className = 'card gray-border';
+                    const gift = gifts[currentGiftDay];
+                    const nextGiftDay = currentGiftDay + 1;
+                    const hasMoreGifts = nextGiftDay < 5;
+                    content.innerHTML = `
+                        <div class="revealed-gift">
+                            <img src="${gift.image}" alt="${gift.name}" class="revealed-gift-image">
+                            <div class="gift-label">Gift ${currentGiftDay + 1}</div>
+                        </div>
+                        ${hasMoreGifts ? `<div class="message" id="nextGiftTimer">Next gift in: calculating...</div>` : ''}
+                    `;
+                    if (hasMoreGifts) {
+                        const updateTimer = () => {
+                            const nextGiftDate = giftDates[nextGiftDay];
+                            const timerEl = document.getElementById('nextGiftTimer');
+                            if (timerEl) timerEl.textContent = `Next gift in: ${formatTimeUntil(nextGiftDate)}`;
+                        };
+                        updateTimer();
+                        setInterval(updateTimer, 1000);
+                    }
+                } else {
+                    card.className = 'card';
+                    const gift = gifts[currentGiftDay];
+                    content.innerHTML = `
+                        <div class="gift-container" id="giftBox">
+                            <img src="images/images/giftbox.png" alt="Gift Box" class="gift-image" />
+                            <div class="gift-label">Gift ${currentGiftDay + 1}</div>
+                            <div class="gift-subtitle">Click to open</div>
+                        </div>
+                    `;
+                    document.getElementById('giftBox').addEventListener('click', () => {
+                        openGift(currentGiftDay);
+                    });
+                }
+            }
+        }
+        render();
+        setInterval(render, 60000);
+
+        // Simple snow animation on a fullscreen canvas
+        (function initSnow(){
+            const canvas = document.getElementById('snowCanvas');
+            const ctx = canvas.getContext('2d');
+            let w = canvas.width = window.innerWidth;
+            let h = canvas.height = window.innerHeight;
+            const flakes = [];
+            const FLake_COUNT = Math.floor((w * h) / 6000);
+
+            function rand(min, max){ return Math.random() * (max - min) + min; }
+
+            function createFlakes(){
+                flakes.length = 0;
+                for (let i = 0; i < FLake_COUNT; i++){
+                    flakes.push({
+                        x: Math.random() * w,
+                        y: Math.random() * h,
+                        r: rand(0.8, 3.2),
+                        d: rand(0.5, 1.5),
+                        vx: rand(-0.3, 0.3)
+                    });
+                }
+            }
+
+            function resize(){
+                w = canvas.width = window.innerWidth;
+                h = canvas.height = window.innerHeight;
+                createFlakes();
+            }
+
+            function update(){
+                ctx.clearRect(0,0,w,h);
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                for (let f of flakes){
+                    f.y += f.d + f.r * 0.05;
+                    f.x += f.vx;
+                    if (f.y > h + 5){ f.y = -10; f.x = Math.random() * w; }
+                    if (f.x > w + 10) f.x = -10;
+                    if (f.x < -10) f.x = w + 10;
+                    ctx.beginPath();
+                    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                requestAnimationFrame(update);
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+            update();
+        })();
+    </script>
+</body>
+</html>
