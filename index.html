@@ -43,6 +43,7 @@
             z-index: 1;
         }
         .card img {
+            max-width: 100%;
             width: 300px;
             height: auto;
             display: block;
@@ -60,12 +61,16 @@
         }
         .tree-container {
             margin: 50px 0;
+            text-align: center;
         }
         .tree-image {
             width: 150px;
             height: auto;
             image-rendering: pixelated;
+            display: block;
+            margin: 0 auto;
         }
+
         .message {
             font-size: 20px;
             color: #ffffff;
@@ -118,6 +123,17 @@
             height: auto;
             image-rendering: pixelated;
             margin-bottom: 20px;
+        }
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .card { padding: 28px 20px; max-width: 360px; }
+            h1 { font-size: 24px; }
+            .date { font-size: 16px; margin-bottom: 28px; }
+            .message, .gift-label, .gift-subtitle { font-size: 16px; }
+            .gift-image { width: 90px; }
+            .revealed-gift-image { width: 140px; }
+            .tree-image { width: 120px; }
+            .card img { width: auto; }
         }
     </style>
 </head>
@@ -236,12 +252,12 @@
                 card.className = 'card';
                 content.innerHTML = `
                     <div class="tree-container">
-                        <img src="images/christmastree.png">
+                        <img src="images/christmastree.png" class="tree-image" alt="Christmas tree">
                     </div> 
                     <div class="message">
-                        No gifts from Shrika yet
+                        No gifts from Shrika.
                         <br>
-                        Check back later
+                        L. Check back later.
                     </div>
                 `;
                 return;
@@ -258,7 +274,7 @@
             }
             if (currentGiftDay >= 0 && currentGiftDay < 5) {
                 const isOpened = openedGifts[currentGiftDay];
-                if (isOpened) {
+                if (isOpened) {move
                     card.className = 'card gray-border';
                     const gift = gifts[currentGiftDay];
                     const nextGiftDay = currentGiftDay + 1;
