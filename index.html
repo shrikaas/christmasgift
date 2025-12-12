@@ -139,17 +139,20 @@
         ].map(t => new Date(t));
 
         const gifts = [
-            { image: "./images/images/day1.png" },
-            { image: "./images/images/day2.png" },
-            { image: "./images/images/day3.png" },
-            { image: "./images/images/day4.png" },
-            { image: "./images/images/day5.png" }
+            { image: "images/day1.png" },
+            { image: "images/day2.png" },
+            { image: "images/day3.png" },
+            { image: "images/day4.png" },
+            { image: "images/day5.png" }
         ];
 
         function preloadImages(list) {
             list.forEach(src => { const img = new Image(); img.src = src; });
         }
-        const assetList = gifts.map(g => g.image).concat(["./images/images/giftbox.png", "./images/images/christmastree.png"]);
+        const assetList = gifts.map(g => g.image).concat([
+            "images/giftbox.png", 
+            "images/christmastree.png"
+        ]);
         preloadImages(assetList);
         const giftDates = [
             new Date('2025/12/19'),
@@ -233,7 +236,7 @@
                 card.className = 'card';
                 content.innerHTML = `
                     <div class="tree-container">
-                        <img src="images/images/christmastree.png" alt="Christmas tree">
+                        <img src="images/christmastree.png">
                     </div> 
                     <div class="message">
                         No gifts from Shrika yet
@@ -281,7 +284,7 @@
                     const gift = gifts[currentGiftDay];
                     content.innerHTML = `
                         <div class="gift-container" id="giftBox">
-                            <img src="images/images/giftbox.png" alt="Gift Box" class="gift-image" />
+                            <img src="images/giftbox.png" alt="Gift Box" class="gift-image" />
                             <div class="gift-label">Gift ${currentGiftDay + 1}</div>
                             <div class="gift-subtitle">Click to open</div>
                         </div>
