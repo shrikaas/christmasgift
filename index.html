@@ -262,7 +262,7 @@
                 `;
                 return;
             }
-            if (currentDate > giftDates[4]) {
+            if (currentDate >= giftDates[4]) {
                 card.className = 'card gray-border';
                 content.innerHTML = `
                     <div class="message">
